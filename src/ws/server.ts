@@ -174,6 +174,38 @@ export function startWSServer() {
         });
     });
 
+    setInterval(() => {
+        globalQueue.forEach(topic => {
+            topic.group.forEach(g => {
+
+                topic.queue.forEach(e => {
+                    if (e.status[g.groupId] === "IN-FLIGHT") {
+
+                        if (topic.mode === "queue") {
+                            if (g.subs.length === 0) return;
+
+                            const idx = g.rrIndex % g.subs.length;
+                            const sub = g.subs[idx];
+                            g.rrIndex++;
+
+                            if (sub) safeSend(sub.socket, e);
+
+
+                        }
+
+                        if (topic.mode === "fanout") {
+                            g.subs.forEach(s => {
+                                if (e.id > s.lastEventId) {
+                                    safeSend(s.socket, e);
+                                }
+                            });
+                        }
+                    }
+                });
+
+            });
+        });
+    }, 5000);
     
     console.log("WebSocket Server running on port 8080");
 }
