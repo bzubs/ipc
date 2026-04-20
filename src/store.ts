@@ -1,6 +1,8 @@
 import { WebSocket } from "ws"
+import type {MODE} from "./models/httpReq.ts"
 
-type event = {
+
+export type event = {
   id: number;
   message: string;
   status: Record<string, "PENDING" | "IN-FLIGHT" | "ACK">; 
@@ -26,6 +28,7 @@ export type topicQueue = {
     queue: Array<event>
     group : Array<consumerGroup>
     nextId : number
+    mode : MODE
 }
 
 export function topicExists(topic: string) {
