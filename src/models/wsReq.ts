@@ -17,8 +17,9 @@ export interface subRequest extends Request {
 }
 
 export interface ackRequest extends Request {
-  requestType : "ACK-"
+  requestType : "ACK"
   consumerId : string
+  groupId : string
   topic : string
   eventid : number  
 }
