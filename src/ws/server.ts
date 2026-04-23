@@ -1,6 +1,6 @@
 import { WebSocketServer } from "ws";
 import type { Request, pubRequest, subRequest, ackRequest } from "../models/wsReq.js";
-import type { topicQueue, event } from "../store.js";
+import type { event } from "../store.js";
 import { globalQueue, topicExists } from "../store.js";
 
 export function startWSServer() {
@@ -64,8 +64,10 @@ export function startWSServer() {
                         consumerId: parsed.consumerId,
                         socket,
                         topic: parsed.topic,
-                        lastEventId: -1
+                        lastEventId: -1,
+                        fromEventId : parsed.fromEventId ? parsed.fromEventId : -1,
                     };
+
                     group.subs.push(subscriber);
 
                     safeSend(socket, { status: "ok", msg: "subscribed" });
@@ -75,14 +77,27 @@ export function startWSServer() {
 
                 // replay ONLY for fanout
                 if (element.mode === "fanout") {
+                    const isReplay = subscriber.fromEventId !== -1;
+
                     element.queue.forEach(e => {
+
+                        // REPLAY MODE (debug / manual)
+                        if (isReplay) {
+                            if (e.id > subscriber.fromEventId) {
+                                safeSend(subscriber.socket, e);
+                            }
+                            return;
+                        }
+
+                        // NORMAL MODE
                         if (
-                            e.id > subscriber!.lastEventId &&
+                            e.id > subscriber.lastEventId &&
                             e.status[group.groupId] !== "ACK"
                         ) {
                             e.status[group.groupId] = "IN-FLIGHT";
-                            safeSend(subscriber!.socket, e);
+                            safeSend(subscriber.socket, e);
                         }
+
                     });
                 }
             }
@@ -152,7 +167,7 @@ export function startWSServer() {
                 }
 
                 const element = res.object;
-                const event = element.queue.find(e => e.id === parsed.eventid);
+                const event = element.queue.find(e => e.id === parsed.eventId);
 
                 if (!event) {
                     safeSend(socket, { status: "error", msg: "event not found" });
@@ -163,7 +178,7 @@ export function startWSServer() {
                 const subscriber = group?.subs.find(s => s.consumerId === parsed.consumerId);
 
                 if (subscriber) {
-                    subscriber.lastEventId = parsed.eventid;
+                    subscriber.lastEventId = parsed.eventId;
                 }
 
                 event.status[parsed.groupId] = "ACK";
