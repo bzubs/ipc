@@ -14,6 +14,7 @@ export interface subRequest extends Request {
     consumerId : string
     groupId : string
     topic : string
+    fromEventId : number
 }
 
 export interface ackRequest extends Request {
@@ -21,6 +22,6 @@ export interface ackRequest extends Request {
   consumerId : string
   groupId : string
   topic : string
-  eventid : number  
+  eventId : number  
 }
 
