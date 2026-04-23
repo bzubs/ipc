@@ -14,6 +14,7 @@ export type Subscriber = {
     socket: WebSocket
     topic: string
     lastEventId: number
+    fromEventId : number
 }
 
 export type consumerGroup = {
