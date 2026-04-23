@@ -1,7 +1,7 @@
 import express from "express";
 import type { postTopicReq } from "../models/httpReq.js";
 import { globalQueue, topicExists } from "../store.js";
-import type { event, Subscriber } from "../store.js";
+import type { consumerGroup, event, Subscriber } from "../store.js";
 
 
 export function startHTTPServer(){
@@ -20,6 +20,7 @@ export function startHTTPServer(){
         const body: postTopicReq = req.body;
 
         const topic = body.topic;
+        const mode = body.mode;
 
         if (!topic) {
             return res.status(400).json({ status: "error", msg: "topic required" });
@@ -31,7 +32,7 @@ export function startHTTPServer(){
             res.status(403).json({status : "error", msg : "topic already exists"});
         }
         else{
-            globalQueue.push({ topic: topic, queue: Array<event>(), subs: Array<Subscriber>() });
+            globalQueue.push({ topic: topic, queue: Array<event>(), group: Array<consumerGroup>(), nextId : 0, mode :  mode});
             res.status(201).json({status : "ok", msg : "topic created now"});                
         }
 
